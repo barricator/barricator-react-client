@@ -1,6 +1,6 @@
 {
   "name": "@barricador/react-client",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Barricador client-side React SDK (pre-evaluated context model, SSE sync, telemetry)",
   "type": "module",
   "main": "dist/index.js",
@@ -13,8 +13,17 @@
     }
   },
   "sideEffects": false,
-  "files": ["dist"],
-  "keywords": ["feature-flags", "barricador", "react", "sdk", "rollout", "ab-testing"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "feature-flags",
+    "barricador",
+    "react",
+    "sdk",
+    "rollout",
+    "ab-testing"
+  ],
   "homepage": "https://github.com/barricador/barricador-react-client",
   "repository": {
     "type": "git",
