@@ -37,6 +37,8 @@ export class BarricadorStore {
   private eventSource: EventSource | null = null;
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private closed = false;
+  /** Avoid spamming the console on every reconnect/refresh failure. */
+  private warnedEvalFailure = false;
 
   constructor(options: BarricadorClientOptions) {
     if (!options.clientKey) throw new Error("clientKey is required");
@@ -72,8 +74,25 @@ export class BarricadorStore {
       const body = (await res.json()) as EvalResponse;
       this.applyValues(body.values ?? {});
       this.setStatus("ready");
-    } catch {
+      this.warnedEvalFailure = false;
+    } catch (err) {
       // Network/eval failure: keep last values; hooks fall back to defaults. Never throw.
+      // CORS preflight rejection (origin not on BARRICADOR_CORS_ORIGINS) surfaces as a
+      // TypeError/"Failed to fetch" with no response — identical to a missing key from the
+      // caller's perspective — so surface a one-shot console hint.
+      if (!this.warnedEvalFailure && typeof console !== "undefined") {
+        this.warnedEvalFailure = true;
+        const origin =
+          typeof globalThis !== "undefined" && "location" in globalThis
+            ? String((globalThis as { location?: { origin?: string } }).location?.origin ?? "")
+            : "";
+        console.warn(
+          `[barricador] flag eval failed (${err instanceof Error ? err.message : String(err)}). ` +
+            `Flags will use their fallback defaults. If this is a browser app, confirm that ` +
+            `${origin || "this page's Origin"} is listed in BARRICADOR_CORS_ORIGINS on the ` +
+            `Barricador backend (CORS preflight 403 looks like a network failure here).`,
+        );
+      }
       this.setStatus(this.status === "initializing" ? "offline" : this.status);
     }
   }
